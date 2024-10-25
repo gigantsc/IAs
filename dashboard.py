@@ -771,7 +771,32 @@ def dashboard_bi():
         st.plotly_chart(fig_mensagens)
         st.markdown("</div>", unsafe_allow_html=True)
 
+################################################################
+import pandas as pd
+import streamlit as st
+import os
 
+# Caminho relativo para o arquivo CSV dentro da pasta 'data'
+caminho_arquivo = 'data/relatorios_conversas.csv'
+
+# Verificar se o arquivo existe
+if os.path.exists(caminho_arquivo):
+    # Tentar carregar o DataFrame
+    try:
+        df = pd.read_csv(caminho_arquivo)
+        if df.empty:
+            st.warning("O arquivo 'relatorios_conversas.csv' está vazio. Por favor, preencha-o com dados para continuar.")
+        else:
+            st.success("Arquivo carregado com sucesso.")
+            st.write("Colunas do DataFrame:", df.columns.tolist())
+            temp_dates = pd.to_datetime(df['Data de Criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
+            st.write("Datas convertidas:", temp_dates)
+    except Exception as e:
+        st.error(f"Erro ao carregar o arquivo: {e}")
+else:
+    st.error("Arquivo 'relatorios_conversas.csv' não encontrado. Por favor, verifique se ele está na pasta 'data'.")
+
+################################################################
 # Lógica para alternar entre páginas
 if pagina_selecionada == "Painel de Mensagem":
     painel_mensagem()
