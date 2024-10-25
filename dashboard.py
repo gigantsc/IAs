@@ -110,6 +110,113 @@ else:
 
 
 
+# Função para normalizar o número de telefone
+def normalize_phone_number(phone):
+    if not phone:
+        return ''
+    normalized_phone = ''.join(filter(str.isdigit, phone))
+    if normalized_phone.startswith('55'):
+        normalized_phone = normalized_phone[2:]
+        if len(normalized_phone) == 10:
+            ddd = normalized_phone[:2]
+            rest_of_number = normalized_phone[2:]
+            normalized_phone = f"{ddd}9{rest_of_number}"
+    return normalized_phone
+
+# Função para normalizar a data para o formato correto com ou sem horário incluído
+def normalizar_data(data_string):
+    try:
+        # Verifica se a data está vazia ou contém uma mensagem de erro
+        if pd.isnull(data_string) or data_string.strip() == "" or "Erro" in data_string:
+            return ''  # Retornar uma string vazia se a data estiver ausente ou for uma mensagem de erro
+
+        # Tenta converter o valor para inteiro (timestamp UNIX)
+        try:
+            data_timestamp = int(data_string)
+            # Converte o timestamp UNIX em uma data legível
+            data_formatada = pd.to_datetime(data_timestamp, unit='s')
+        except ValueError:
+            # Caso não seja um timestamp, tenta converter como data formatada
+            # Primeiro tenta com horário, depois sem horário
+            try:
+                data_formatada = pd.to_datetime(data_string, format='%d/%m/%y %H:%M:%S', dayfirst=True)
+            except ValueError:
+                # Se falhar, tenta sem o horário
+                data_formatada = pd.to_datetime(data_string, format='%d/%m/%y', dayfirst=True)
+
+        # Retorna a data no formato 'DD/MM/YY HH:MM:SS' (se possível) ou apenas 'DD/MM/YY'
+        return data_formatada.strftime('%d/%m/%y %H:%M:%S') if ' ' in data_string else data_formatada.strftime('%d/%m/%y')
+    except Exception as e:
+        st.error(f"Erro ao converter a data: {data_string} - {e}")
+        return ''
+
+# Funções para gerar resumos, datas, nomes e classificações
+def gerar_resumo_conversa(mensagens, phone_number, ai_name, ai_objectives):
+    try:
+        # Limitar o resumo às últimas 15 mensagens
+        mensagens_limitadas = '\n'.join(mensagens.strip().split('\n')[-15:])
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"Escreva seu resumo todo em um único parágrafo sem 'enters' ou 'quebras de linhas'. Resuma a conversa entre o usuário, cujo número é {phone_number}, e a IA de nome {ai_name}. Caso o usuário forneça o nome durante a conversa, use o nome fornecido para referenciá-lo. Lembre-se que {ai_name} é o nome da IA. No seu resumo, atente-se às seguintes situações:{ai_objectives}. Essas são as mensagens entre o usuário e a IA: {mensagens_limitadas}"},
+            ],
+            max_tokens=300,
+            temperature=0.2,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Erro ao gerar resumo: {e}"
+
+def gerar_data(mensagens, phone_number):
+    try:
+        # Extrair as 8 primeiras mensagens do usuário
+        linhas = mensagens.strip().split('\n')
+        ultima_mensagem = '\n'.join(linhas[-8:])  # Junta as 8 primeiras linhas
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"Identifique a data da mensagem mais recente enviada pelo número {phone_number}. Seu retorno deve ser apenas a data na seguinte estrutura: 'XX/XX/XX HH:MM:SS'. Exemplo de resposta: 12/10/24 09:30:55. Por exemplo, se tiver uma mensagem com data '12/10/24 09:30:55' e outra com '12/10/24 09:35:55', você deve retornar '12/10/24 09:35:55'."},
+                {"role": "user", "content": f"Identifique a data da mensagem mais recente enviada pelo número {phone_number}. Seu retorno deve ser apenas a data na seguinte estrutura: 'XX/XX/XX HH:MM:SS'. Exemplo de resposta: 12/10/24 09:30:55. Por exemplo, se tiver uma mensagem com data '12/10/24 09:30:55' e outra com '12/10/24 09:35:55', você deve retornar '12/10/24 09:35:55'. Essas são as mensagens:\n\n{ultima_mensagem}"},
+            ],
+            max_tokens=50,
+            temperature=0.2,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Erro ao gerar data: {e}"
+
+def gerar_nome(mensagens, phone_number, ai_name):
+    try:
+        mensagens_limitadas = '\n'.join(mensagens.strip().split('\n')[-20:])
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"Analise a conversa entre o usuário, cujo telefone é {phone_number}, e a IA, cujo nome é {ai_name}. Seu objetivo é identificar e retornar o nome do usuário. Seu retorno deve ser apenas o nome do usuário: Exemplo 'Bruno'. Caso não identifique o nome do usuário, retorne apenas 'Nome não fornecido'. Lembre-se que o nome da IA é {ai_name}."},
+                {"role": "user", "content": f"As mensagens são:\n\n{mensagens_limitadas}"},
+            ],
+            max_tokens=50,
+            temperature=0.2,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Erro ao gerar nome: {e}"
+
+def gerar_classificacao(mensagens, phone_number, ai_name):
+    try:
+        mensagens_limitadas = '\n'.join(mensagens.strip().split('\n')[-20:])
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": f"Analise a conversa entre o usuário, cujo telefone é {phone_number}, e a IA, cujo nome é {ai_name}. Classifique a conversa conforme as seguintes categorias: {ai_status}. Sua resposta deve conter apenas a classificação. Exemplo: 'Lead quente'"},
+                {"role": "user", "content": f"As mensagens são:\n\n{mensagens_limitadas}"},
+            ],
+            max_tokens=50,
+            temperature=0.2,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        return f"Erro ao gerar classificação: {e}"
+
 # Funções para salvar e restaurar análises individuais no Redis
 def salvar_analise_no_redis(redis_client, phone_number, analise_tipo, resultado):
     redis_client.set(f"analise:{analise_tipo}:{phone_number}", resultado)
@@ -120,6 +227,12 @@ def restaurar_analise_do_redis(redis_client, phone_number, analise_tipo):
         return resultado.decode('utf-8')
     else:
         return None
+
+# Função para salvar dados processados no Redis
+def salvar_dados_no_redis(redis_client, df):
+    for _, row in df.iterrows():
+        phone_number = row['Número de WhatsApp']
+        redis_client.set(f"dashboard_dados:{phone_number}", json.dumps(row.to_dict()))  # Salva o DataFrame como JSON no Redis
 
 # Função para obter todos os números históricos
 def get_historic_phone_numbers(_redis_client):
@@ -143,6 +256,21 @@ def get_historic_phone_numbers(_redis_client):
     sorted_phone_numbers = sorted(phone_numbers_with_timestamps.items(), key=lambda x: x[1], reverse=True)
     historic_phone_numbers = [{'phone_number': phone, 'created_at': timestamp} for phone, timestamp in sorted_phone_numbers]
     return historic_phone_numbers
+
+# Função para salvar o estado dos checks no Redis
+def salvar_checks_no_redis(redis_client, df):
+    for index, row in df.iterrows():
+        phone_number = row['Número de WhatsApp']
+        selecionado = row['Selecionado']
+        redis_client.hset(f"check_state:{phone_number}", "Selecionado", selecionado)
+
+# Função para restaurar o estado dos checks do Redis
+def restaurar_checks_do_redis(redis_client, df):
+    for index, row in df.iterrows():
+        phone_number = row['Número de WhatsApp']
+        selecionado = redis_client.hget(f"check_state:{phone_number}", "Selecionado")
+        if selecionado is not None:
+            df.at[index, 'Selecionado'] = bool(int(selecionado))
 
 # Adicionar um seletor de período à barra lateral
 with st.sidebar:
@@ -336,50 +464,63 @@ def painel_mensagem():
             phone_number = row['Número de WhatsApp']
             redis_client.set(f"dashboard_dados:{phone_number}", json.dumps(row.to_dict()))  # Salva o DataFrame como JSON no Redis
 
+##nova função restaura dados do redis customcode
+
     # Função para restaurar dados do Redis
-    def restaurar_dados_do_redis(redis_client):
-        cursor = '0'
-        dados_redis = []
-        while True:
-            cursor, keys = redis_client.scan(cursor=cursor, match='dashboard_dados:*', count=1000)
-            for key in keys:
-                dado = redis_client.get(key)
-                if dado:
-                    dados_redis.append(json.loads(dado.decode('utf-8')))
-            if cursor == 0:
-                break
-        return dados_redis
+def restaurar_dados_do_redis(redis_client):
+    cursor = '0'
+    dados_redis = []
+    while True:
+        cursor, keys = redis_client.scan(cursor=cursor, match='message:*', count=1000)
+        for key in keys:
+            dado = redis_client.hgetall(key)
+            if dado:
+                # Transformar os dados em um formato utilizável para o DataFrame
+                dado_formatado = {
+                    'status': dado.get(b'status', b'').decode('utf-8'),
+                    'id': dado.get(b'id', b'').decode('utf-8'),
+                    'localTime': dado.get(b'localTime', b'').decode('utf-8'),
+                    'userName': dado.get(b'userName', b'').decode('utf-8'),
+                    'threadId': dado.get(b'threadId', b'').decode('utf-8'),
+                    'assistantId': dado.get(b'assistantId', b'').decode('utf-8'),
+                    'phoneNumber': dado.get(b'phoneNumber', b'').decode('utf-8'),
+                    'timestamp': int(dado.get(b'timestamp', b'0')),
+                    'location': dado.get(b'location', b'').decode('utf-8') if dado.get(b'location') else None,
+                    'content': dado.get(b'content', b'').decode('utf-8'),
+                    'createdAt': int(dado.get(b'createdAt', b'0')) // 1000,  # Convertendo de milissegundos para segundos
+                    'isAutoGenerated': dado.get(b'isAutoGenerated', b'false').decode('utf-8').lower() == 'true',
+                    'aiPhoneNumber': dado.get(b'aiPhoneNumber', b'').decode('utf-8')
+                }
+                dados_redis.append(dado_formatado)
+        if cursor == '0':
+            break
+    return dados_redis
 
-    # Função para salvar o estado dos checks no Redis
-    def salvar_checks_no_redis(redis_client, df):
-        for _, row in df.iterrows():
-            phone_number = row['Número de WhatsApp']
-            check_value = row['Selecionado']
-            redis_client.set(f"check:{phone_number}", str(check_value))  # Armazena como string ('True' ou 'False')
-
-    # Função para restaurar os checks do Redis
-    def restaurar_checks_do_redis(redis_client, df):
-        for i, row in df.iterrows():
-            phone_number = row['Número de WhatsApp']
-            check_value = redis_client.get(f"check:{phone_number}")
-            if check_value:
-                df.at[i, 'Selecionado'] = check_value.decode('utf-8') == 'True'  # Converte string para booleano
-
-    # Carregar dados salvos do Redis ou session_state
-    dados_salvos = restaurar_dados_do_redis(redis_client)
-    if 'df' not in st.session_state:
-        if dados_salvos:
-            df = pd.DataFrame(dados_salvos)
-            # Aplicar a normalização da data e ordenar
-            df['Data de Criação'] = df['Data de Criação'].apply(normalizar_data)
-            df = df.sort_values(by='Data de Criação', ascending=False)
-            st.session_state['df'] = df
+# Carregar dados salvos do Redis ou session_state
+dados_salvos = restaurar_dados_do_redis(redis_client)
+if 'df' not in st.session_state:
+    if dados_salvos:
+        df = pd.DataFrame(dados_salvos)
+        if df.empty:
+            st.warning("Sem dados disponíveis no DataFrame.")
+            st.stop()
+        # Verificar se a coluna 'createdAt' existe e converter para datetime
+        if 'createdAt' in df.columns:
+            df['Data de Criação'] = pd.to_datetime(df['createdAt'], unit='s')
         else:
-            df = pd.DataFrame()
-            st.session_state['df'] = df
+            st.warning("A coluna 'createdAt' não foi encontrada no DataFrame. Verifique o arquivo de origem.")
+            st.stop()
+        # Ordenar os dados por 'Data de Criação'
+        df = df.sort_values(by='Data de Criação', ascending=False)
+        st.session_state['df'] = df
     else:
-        df = st.session_state['df']
+        st.warning("Sem dados disponíveis no DataFrame.")
+        df = pd.DataFrame()
+        st.session_state['df'] = df
+else:
+    df = st.session_state['df']
 
+## final customcode
     
     # Adicionar o seletor de período
     period_options = ['Completo', 'Último mês', 'Últimos 14 dias', 'Últimos 7 dias', 'Ontem', 'Hoje']
@@ -443,7 +584,7 @@ def painel_mensagem():
         historic_phone_numbers = get_historic_phone_numbers(redis_client)
         if not historic_phone_numbers:
             st.info("Nenhum dado encontrado no Redis.")
-            return
+            st.stop()
 
         # Criar uma cópia do dataframe atual
         previous_df = df.copy()
@@ -573,7 +714,7 @@ def painel_mensagem():
     else:
         if df.empty:
             st.warning('Não há dados disponíveis. Clique em "Atualizar" para carregar os dados.')
-            return
+            st.stop()
         else:
             # Restaurar o estado dos checks
             restaurar_checks_do_redis(redis_client, df)
