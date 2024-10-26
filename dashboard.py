@@ -388,27 +388,10 @@ def painel_mensagem():
     # Obter a data atual
     today = datetime.today()
 
-#começa
-      # Verificar se o DataFrame está vazio
-    if df.empty:
-        st.warning("Sem dados disponíveis no DataFrame.")
-        st.stop()  # Interrompe a execução se não houver dados
+    #customcode inicio
 
-    # Verificar as colunas disponíveis no DataFrame
-    st.write("Colunas disponíveis no DataFrame:", df.columns.tolist())
-
-    # Remover espaços extras nos nomes das colunas e converter tudo para minúsculas para facilitar a comparação
-    df.columns = df.columns.str.strip().str.lower()
-
-    # Verificar se a coluna 'data de criação' (em minúsculas) existe
-    if 'data de criação' not in df.columns:
-        st.error("Coluna 'Data de Criação' não encontrada no DataFrame. As colunas disponíveis são: " + ", ".join(df.columns))
-        st.stop()
-
-    # Ajustar para o nome correto da coluna em minúsculas
-    temp_dates = pd.to_datetime(df['data de criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
  
-    #termina
+    #customcode fim
 
     # Criar uma série temporária com as datas convertidas
     temp_dates = pd.to_datetime(df['Data de Criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
