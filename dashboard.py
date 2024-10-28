@@ -8,6 +8,20 @@ from openai import OpenAI
 from datetime import datetime, timedelta
 import pickle
 from pathlib import Path
+import os
+
+# Inicialize a conexão com o Redis usando as variáveis de ambiente
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_URL"),  # ou 'localhost' se estiver executando localmente
+    port=6379,  # porta padrão do Redis
+    password=os.getenv("REDIS_PASSWORD")  # a senha, se for necessária
+)
+try:
+    redis_client.ping()
+    print("Conexão com o Redis estabelecida com sucesso.")
+except redis.exceptions.ConnectionError as e:
+    print("Erro ao conectar ao Redis:", e)
+
 
 # Definir o layout expandido da página
 st.set_page_config(layout="wide")
