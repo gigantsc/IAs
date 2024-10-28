@@ -425,6 +425,7 @@ def restaurar_dados_do_redis(redis_client):
         if dados_salvos:
             df = pd.DataFrame(dados_salvos)
             st.write("DataFrame criado a partir dos dados do Redis:", df)
+            
             # Aplicar a normalização da data e ordenar
             df['Data de Criação'] = df['Data de Criação'].apply(normalizar_data)
             df = df.sort_values(by='Data de Criação', ascending=False)
