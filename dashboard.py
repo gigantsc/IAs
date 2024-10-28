@@ -122,10 +122,29 @@ def restaurar_analise_do_redis(redis_client, phone_number, analise_tipo):
         return None
 
 # Função para obter todos os números históricos
-def get_historic_phone_numbers(_redis_client):
+def get_historic_phone_numbers(redis_client):
     phone_numbers_with_timestamps = {}
-    cursor = '0'
+    cursor = '0'  # Inicialize o cursor como '0' antes do loop
 
+    # Buscar pelas chaves que seguem o padrão `conversation:*`
+    while cursor != '0':  # O loop continua enquanto o cursor não retorna '0'
+        cursor, keys = redis_client.scan(cursor=cursor, match='conversation:*', count=1000)
+        for key in keys:
+            # Recuperar mensagens armazenadas no formato JSON
+            messages = redis_client.lrange(key, 0, -1)  # Pega todas as mensagens do Redis
+            for message_data in messages:
+                message_data = json.loads(message_data.decode('utf-8'))
+                phone_number = key.split(":")[1]  # Extrai o número do telefone da chave
+                timestamp = int(message_data['timestamp'])
+                # Atualizar a lista se encontrar um timestamp mais recente
+                if phone_number not in phone_numbers_with_timestamps or timestamp > phone_numbers_with_timestamps[phone_number]:
+                    phone_numbers_with_timestamps[phone_number] = timestamp
+
+    # Ordenar e retornar todos os históricos
+    sorted_phone_numbers = sorted(phone_numbers_with_timestamps.items(), key=lambda x: x[1], reverse=True)
+    historic_phone_numbers = [{'phone_number': phone, 'created_at': timestamp} for phone, timestamp in sorted_phone_numbers]
+    return historic_phone_numbers
+        
     # Carregar todos os números do Redis
     while True:
         cursor, keys = _redis_client.scan(cursor=cursor, match='message:*', count=1000)
@@ -337,18 +356,37 @@ def painel_mensagem():
             redis_client.set(f"dashboard_dados:{phone_number}", json.dumps(row.to_dict()))  # Salva o DataFrame como JSON no Redis
 
     # Função para restaurar dados do Redis
-    def restaurar_dados_do_redis(redis_client):
-        cursor = '0'
-        dados_redis = []
-        while True:
-            cursor, keys = redis_client.scan(cursor=cursor, match='dashboard_dados:*', count=1000)
-            for key in keys:
-                dado = redis_client.get(key)
-                if dado:
-                    dados_redis.append(json.loads(dado.decode('utf-8')))
-            if cursor == 0:
-                break
-        return dados_redis
+def restaurar_dados_do_redis(redis_client):
+    cursor = '0'
+    dados_redis = []
+    while cursor != '0':
+        # Tente escanear as chaves com o padrão `conversation:*`
+        cursor, keys = redis_client.scan(cursor=cursor, match='conversation:*', count=1000)
+        st.write(f"Chaves encontradas: {keys}")  # Verifique se alguma chave é retornada
+
+        # Se nenhuma chave for encontrada, interrompa o processo para debugar
+        if not keys:
+            st.warning("Nenhuma chave de conversa encontrada no Redis.")
+            break
+
+        for key in keys:
+            # Tente ler as mensagens associadas à chave
+            mensagens = redis_client.lrange(key, 0, -1)
+            st.write(f"Mensagens para a chave {key}: {mensagens}")  # Verifique o conteúdo das mensagens
+
+            if mensagens:
+                # Decodifique as mensagens e adicione ao `dados_redis`
+                conversa = [json.loads(msg.decode('utf-8')) for msg in mensagens]
+                dados_redis.append(conversa)
+            else:
+                st.warning(f"Sem mensagens para a chave {key}")
+        
+        if cursor == '0':
+            break
+
+    # Exibir os dados completos que foram recuperados
+    st.write("Dados recuperados do Redis:", dados_redis)
+    return dados_redis
 
     # Função para salvar o estado dos checks no Redis
     def salvar_checks_no_redis(redis_client, df):
@@ -370,11 +408,13 @@ def painel_mensagem():
     if 'df' not in st.session_state:
         if dados_salvos:
             df = pd.DataFrame(dados_salvos)
+            st.write("DataFrame criado a partir dos dados do Redis:", df)
             # Aplicar a normalização da data e ordenar
             df['Data de Criação'] = df['Data de Criação'].apply(normalizar_data)
             df = df.sort_values(by='Data de Criação', ascending=False)
             st.session_state['df'] = df
         else:
+            st.warning("Nenhum dado encontrado no Redis.")
             df = pd.DataFrame()
             st.session_state['df'] = df
     else:
@@ -388,7 +428,7 @@ def painel_mensagem():
     # Obter a data atual
     today = datetime.today()
 
-    #customcode inicio
+#começa
       # Verificar se o DataFrame está vazio
     if df.empty:
         st.warning("Sem dados disponíveis no DataFrame.")
@@ -408,7 +448,7 @@ def painel_mensagem():
     # Ajustar para o nome correto da coluna em minúsculas
     temp_dates = pd.to_datetime(df['data de criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
  
-    #customcode fim
+    #termina
 
     # Criar uma série temporária com as datas convertidas
     temp_dates = pd.to_datetime(df['Data de Criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
