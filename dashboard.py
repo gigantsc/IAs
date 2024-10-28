@@ -16,6 +16,8 @@ redis_client = redis.Redis(
     port=6379,  # porta padrão do Redis
     password=os.getenv("REDIS_PASSWORD")  # a senha, se for necessária
 )
+# Conecte ao servidor Redis
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)  # Ajuste conforme necessário
 try:
     redis_client.ping()
     print("Conexão com o Redis estabelecida com sucesso.")
