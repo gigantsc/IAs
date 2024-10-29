@@ -75,46 +75,19 @@ else:
     st.warning("A chave da API OpenAI não foi fornecida. Vá para 'Configurações' para inserir sua chave.")
 
 # Conectar ao Redis somente se as variáveis estiverem preenchidas
-# Configurar Redis após garantir que URL e senha estão disponíveis
-import redis
-import streamlit as st
-
-# Inicialmente define redis_client como None
-redis_client = None
-
-# Logs para diagnosticar as credenciais do Redis
-print("Verificando credenciais do Redis...")
-print("URL do Redis:", st.session_state.get('redis_url'))
-print("Senha do Redis:", st.session_state.get('redis_password'))
-
-# Configura a conexão com o Redis, com diagnóstico de erro detalhado
-if st.session_state.get('redis_url') and st.session_state.get('redis_password'):
+if st.session_state['redis_url'] and st.session_state['redis_password']:
     try:
-        # Configura o cliente Redis usando as credenciais do session_state
         redis_client = redis.Redis.from_url(
-            f'redis://default:{st.session_state["redis_password"]}@{st.session_state["redis_url"]}',
-             socket_timeout=5  # Timeout em segundos
+            f'redis://default:{st.session_state["redis_password"]}@{st.session_state["redis_url"]}'
         )
-        # Testa a conexão com um ping
         redis_client.ping()
-        print("Conexão com Redis estabelecida com sucesso.")
-        st.toast("Conexão com o Redis estabelecida com sucesso.", icon="✅")
-    except redis.ConnectionError as e:
-        # Diagnóstico de erro de conexão
-        print(f"Erro ao conectar ao Redis: {e}")
-        st.error(f"Erro ao conectar ao Redis: {e}")
-        redis_client = None
-        st.stop()
+        st.toast("Conexão com Redis estabelecida com sucesso.", icon="✅")
     except Exception as e:
-        # Tratamento de qualquer outro erro inesperado
-        print(f"Erro inesperado ao configurar o Redis: {e}")
-        st.error(f"Erro inesperado ao configurar o Redis: {e}")
-        redis_client = None
+        st.error(f"Erro ao conectar ao Redis: {e}")
         st.stop()
 else:
-    # Alerta para falta de credenciais de Redis
-    print("Credenciais do Redis ausentes ou incompletas.")
-    st.warning("As credenciais do Redis estão incompletas. Preencha os campos de URL e senha na seção de configurações.")
+    st.warning("As credenciais do Redis estão incompletas. Por favor, preencha os campos de URL e senha do Redis na seção de configurações.")
+
 
 
 # Conectar AI_NAME E AI_OBJECTIVES somente se as variáveis estiverem preenchidas
@@ -365,28 +338,17 @@ def painel_mensagem():
 
     # Função para restaurar dados do Redis
     def restaurar_dados_do_redis(redis_client):
-        # Verificar se redis_client está conectado antes de tentar acessar
-        if not redis_client:
-         print("redis_client não está conectado. Verifique a conexão com o Redis.")
-         return []  # Retorna lista vazia se a conexão falhar
-    try:
         cursor = '0'
         dados_redis = []
         while True:
-            cursor, keys = redis_client.scan(cursor=cursor, match='dashboard:*')
+            cursor, keys = redis_client.scan(cursor=cursor, match='dashboard_dados:*', count=1000)
             for key in keys:
                 dado = redis_client.get(key)
                 if dado:
-                    dados_redis.append(dado)
-            if cursor == '0':
+                    dados_redis.append(json.loads(dado.decode('utf-8')))
+            if cursor == 0:
                 break
         return dados_redis
-    except redis.ConnectionError as e:
-        print(f"Erro de conexão ao escanear dados no Redis: {e}")
-        return []
-    except Exception as e:
-        print(f"Erro inesperado ao acessar o Redis: {e}")
-        return []
 
     # Função para salvar o estado dos checks no Redis
     def salvar_checks_no_redis(redis_client, df):

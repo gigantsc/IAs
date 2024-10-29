@@ -1,0 +1,258 @@
+[
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "load_dotenv",
+        "importPath": "dotenv",
+        "description": "dotenv",
+        "isExtraImport": true,
+        "detail": "dotenv",
+        "documentation": {}
+    },
+    {
+        "label": "redis",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "redis",
+        "description": "redis",
+        "detail": "redis",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "streamlit",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "streamlit",
+        "description": "streamlit",
+        "detail": "streamlit",
+        "documentation": {}
+    },
+    {
+        "label": "plotly.express",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "plotly.express",
+        "description": "plotly.express",
+        "detail": "plotly.express",
+        "documentation": {}
+    },
+    {
+        "label": "OpenAI",
+        "importPath": "openai",
+        "description": "openai",
+        "isExtraImport": true,
+        "detail": "openai",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "pickle",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pickle",
+        "description": "pickle",
+        "detail": "pickle",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "salva_chave",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def salva_chave(caminho, chave):\n    with open(caminho, 'wb') as f:\n        pickle.dump(chave, f)\ndef le_chave(caminho):\n    if caminho.exists() and caminho.stat().st_size > 0:\n        with open(caminho, 'rb') as f:\n            try:\n                return pickle.load(f)\n            except (EOFError, pickle.UnpicklingError):\n                st.warning(f\"O arquivo de chave em {caminho} está corrompido ou vazio. Salve novamente a chave.\")",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "le_chave",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def le_chave(caminho):\n    if caminho.exists() and caminho.stat().st_size > 0:\n        with open(caminho, 'rb') as f:\n            try:\n                return pickle.load(f)\n            except (EOFError, pickle.UnpicklingError):\n                st.warning(f\"O arquivo de chave em {caminho} está corrompido ou vazio. Salve novamente a chave.\")\n                # Limpa o arquivo corrompido\n                caminho.write_bytes(b'')\n                return ''",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "salvar_analise_no_redis",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def salvar_analise_no_redis(redis_client, phone_number, analise_tipo, resultado):\n    redis_client.set(f\"analise:{analise_tipo}:{phone_number}\", resultado)\ndef restaurar_analise_do_redis(redis_client, phone_number, analise_tipo):\n    resultado = redis_client.get(f\"analise:{analise_tipo}:{phone_number}\")\n    if resultado:\n        return resultado.decode('utf-8')\n    else:\n        return None\n# Função para obter todos os números históricos\ndef get_historic_phone_numbers(_redis_client):",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "restaurar_analise_do_redis",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def restaurar_analise_do_redis(redis_client, phone_number, analise_tipo):\n    resultado = redis_client.get(f\"analise:{analise_tipo}:{phone_number}\")\n    if resultado:\n        return resultado.decode('utf-8')\n    else:\n        return None\n# Função para obter todos os números históricos\ndef get_historic_phone_numbers(_redis_client):\n    phone_numbers_with_timestamps = {}\n    cursor = '0'",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "get_historic_phone_numbers",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def get_historic_phone_numbers(_redis_client):\n    phone_numbers_with_timestamps = {}\n    cursor = '0'\n    # Carregar todos os números do Redis\n    while True:\n        cursor, keys = _redis_client.scan(cursor=cursor, match='message:*', count=1000)\n        for key in keys:\n            message_data = _redis_client.hgetall(key)\n            if b'phoneNumber' in message_data and b'createdAt' in message_data:\n                phone_number = message_data[b'phoneNumber'].decode('utf-8')",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "pagina_configuracoes",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def pagina_configuracoes():\n    st.markdown(\"<h1 style='color: #03fcf8;'>Configurações</h1>\", unsafe_allow_html=True)\n    st.write(\"Insira suas informações para realizar as conexões.\")\n    st.markdown(\"<div style='margin-bottom: 40px;'></div>\", unsafe_allow_html=True)\n    # Campo de entrada para a chave OpenAI\n    st.markdown(\"<span style='color: #03fcf8; font-weight: bold;'>OPENAI_API_KEY</span>\", unsafe_allow_html=True)\n    chave_input = st.text_input(\"• Insira sua chave da OpenAI:\", value=st.session_state['api_key'])\n    # Espaço entre os campos\n    st.markdown(\"<div style='margin-bottom: 40px;'></div>\", unsafe_allow_html=True)\n    # Campos de entrada para o Redis",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "painel_mensagem",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def painel_mensagem():\n    st.title('Dashboard - Conversas da IA com Usuários')\n    # Função para normalizar o número de telefone\n    def normalize_phone_number(phone):\n        if not phone:\n            return ''\n        normalized_phone = ''.join(filter(str.isdigit, phone))\n        if normalized_phone.startswith('55'):\n            normalized_phone = normalized_phone[2:]\n            if len(normalized_phone) == 10:",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "dashboard_bi",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n#inicio nova função arquivo vazio\nimport os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.\ndef dashboard_bi():\n    # Título com ícone",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "dashboard_bi",
+        "kind": 2,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n    # Caminho do arquivo CSV\n    csv_file_path = 'data/relatorios_conversas.csv'\n    # Verificar se o arquivo existe e não está vazio\n    if not os.path.exists(csv_file_path) or os.path.getsize(csv_file_path) == 0:",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "PASTA_CONFIGURACOES",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "PASTA_CONFIGURACOES = Path('configuracoes')\nPASTA_CONFIGURACOES.mkdir(exist_ok=True)\n# Funções de leitura e escrita da chave API\ndef salva_chave(caminho, chave):\n    with open(caminho, 'wb') as f:\n        pickle.dump(chave, f)\ndef le_chave(caminho):\n    if caminho.exists() and caminho.stat().st_size > 0:\n        with open(caminho, 'rb') as f:\n            try:",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "API_KEY_PATH",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "API_KEY_PATH = PASTA_CONFIGURACOES / 'OPENAI_API_KEY'\nREDIS_URL_PATH = PASTA_CONFIGURACOES / 'REDIS_URL'\nREDIS_PASSWORD_PATH = PASTA_CONFIGURACOES / 'REDIS_PASSWORD'\nAI_NAME_PATH = PASTA_CONFIGURACOES / 'AI_NAME'\nAI_OBJECTIVES_PATH = PASTA_CONFIGURACOES / 'AI_OBJECTIVES'\nAI_STATUS_PATH = PASTA_CONFIGURACOES / 'STATUS'\n# Lógica para salvar e ler as chaves de configuração\nif 'api_key' not in st.session_state:\n    st.session_state['api_key'] = le_chave(API_KEY_PATH)\nif 'redis_url' not in st.session_state:",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "REDIS_URL_PATH",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "REDIS_URL_PATH = PASTA_CONFIGURACOES / 'REDIS_URL'\nREDIS_PASSWORD_PATH = PASTA_CONFIGURACOES / 'REDIS_PASSWORD'\nAI_NAME_PATH = PASTA_CONFIGURACOES / 'AI_NAME'\nAI_OBJECTIVES_PATH = PASTA_CONFIGURACOES / 'AI_OBJECTIVES'\nAI_STATUS_PATH = PASTA_CONFIGURACOES / 'STATUS'\n# Lógica para salvar e ler as chaves de configuração\nif 'api_key' not in st.session_state:\n    st.session_state['api_key'] = le_chave(API_KEY_PATH)\nif 'redis_url' not in st.session_state:\n    st.session_state['redis_url'] = le_chave(REDIS_URL_PATH)",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "REDIS_PASSWORD_PATH",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "REDIS_PASSWORD_PATH = PASTA_CONFIGURACOES / 'REDIS_PASSWORD'\nAI_NAME_PATH = PASTA_CONFIGURACOES / 'AI_NAME'\nAI_OBJECTIVES_PATH = PASTA_CONFIGURACOES / 'AI_OBJECTIVES'\nAI_STATUS_PATH = PASTA_CONFIGURACOES / 'STATUS'\n# Lógica para salvar e ler as chaves de configuração\nif 'api_key' not in st.session_state:\n    st.session_state['api_key'] = le_chave(API_KEY_PATH)\nif 'redis_url' not in st.session_state:\n    st.session_state['redis_url'] = le_chave(REDIS_URL_PATH)\nif 'redis_password' not in st.session_state:",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "AI_NAME_PATH",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "AI_NAME_PATH = PASTA_CONFIGURACOES / 'AI_NAME'\nAI_OBJECTIVES_PATH = PASTA_CONFIGURACOES / 'AI_OBJECTIVES'\nAI_STATUS_PATH = PASTA_CONFIGURACOES / 'STATUS'\n# Lógica para salvar e ler as chaves de configuração\nif 'api_key' not in st.session_state:\n    st.session_state['api_key'] = le_chave(API_KEY_PATH)\nif 'redis_url' not in st.session_state:\n    st.session_state['redis_url'] = le_chave(REDIS_URL_PATH)\nif 'redis_password' not in st.session_state:\n    st.session_state['redis_password'] = le_chave(REDIS_PASSWORD_PATH)",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "AI_OBJECTIVES_PATH",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "AI_OBJECTIVES_PATH = PASTA_CONFIGURACOES / 'AI_OBJECTIVES'\nAI_STATUS_PATH = PASTA_CONFIGURACOES / 'STATUS'\n# Lógica para salvar e ler as chaves de configuração\nif 'api_key' not in st.session_state:\n    st.session_state['api_key'] = le_chave(API_KEY_PATH)\nif 'redis_url' not in st.session_state:\n    st.session_state['redis_url'] = le_chave(REDIS_URL_PATH)\nif 'redis_password' not in st.session_state:\n    st.session_state['redis_password'] = le_chave(REDIS_PASSWORD_PATH)\nif 'ai_name_info' not in st.session_state:",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "AI_STATUS_PATH",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "AI_STATUS_PATH = PASTA_CONFIGURACOES / 'STATUS'\n# Lógica para salvar e ler as chaves de configuração\nif 'api_key' not in st.session_state:\n    st.session_state['api_key'] = le_chave(API_KEY_PATH)\nif 'redis_url' not in st.session_state:\n    st.session_state['redis_url'] = le_chave(REDIS_URL_PATH)\nif 'redis_password' not in st.session_state:\n    st.session_state['redis_password'] = le_chave(REDIS_PASSWORD_PATH)\nif 'ai_name_info' not in st.session_state:\n    st.session_state['ai_name_info'] = le_chave(AI_NAME_PATH)",
+        "detail": "dashboard",
+        "documentation": {}
+    },
+    {
+        "label": "api_key",
+        "kind": 5,
+        "importPath": "dashboard",
+        "description": "dashboard",
+        "peekOfCode": "api_key = st.session_state['api_key']\n# Inicializar o cliente OpenAI somente se a chave estiver disponível\nif st.session_state['api_key']:\n    try:\n        client = OpenAI(api_key=st.session_state['api_key'])\n        st.toast(\"Cliente OpenAI inicializado com sucesso.\", icon=\"✅\")\n    except Exception as e:\n        st.error(f\"Erro ao inicializar o cliente OpenAI: {e}\")\nelse:\n    st.warning(\"A chave da API OpenAI não foi fornecida. Vá para 'Configurações' para inserir sua chave.\")",
+        "detail": "dashboard",
+        "documentation": {}
+    }
+]
