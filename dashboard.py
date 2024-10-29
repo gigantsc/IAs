@@ -388,9 +388,31 @@ def painel_mensagem():
     # Obter a data atual
     today = datetime.today()
 
+#começa
+      # Verificar se o DataFrame está vazio
+    if df.empty:
+        st.warning("Sem dados disponíveis no DataFrame.")
+        st.stop()  # Interrompe a execução se não houver dados
+
+    # Verificar as colunas disponíveis no DataFrame
+    st.write("Colunas disponíveis no DataFrame:", df.columns.tolist())
+
+    # Remover espaços extras nos nomes das colunas e converter tudo para minúsculas para facilitar a comparação
+    df.columns = df.columns.str.strip().str.lower()
+
+    # Verificar se a coluna 'data de criação' (em minúsculas) existe
+    if 'data de criação' not in df.columns:
+        st.error("Coluna 'Data de Criação' não encontrada no DataFrame. As colunas disponíveis são: " + ", ".join(df.columns))
+        st.stop()
+
+    # Ajustar para o nome correto da coluna em minúsculas
+    temp_dates = pd.to_datetime(df['data de criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
+ 
+    #termina
+
     # Criar uma série temporária com as datas convertidas
     temp_dates = pd.to_datetime(df['Data de Criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
-
+    
     # Aplicar o filtro de acordo com o período selecionado
     if selected_period == 'Último mês':
         start_date = today - timedelta(days=30)
@@ -603,6 +625,29 @@ def dashboard_bi():
         "<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>",
         unsafe_allow_html=True
     )
+#inicio nova função arquivo vazio
+import os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.
+
+def dashboard_bi():
+    # Título com ícone
+    st.markdown(
+        "<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>",
+        unsafe_allow_html=True
+    )
+
+    # Caminho do arquivo CSV
+    csv_file_path = 'data/relatorios_conversas.csv'
+
+    # Verificar se o arquivo existe e não está vazio
+    if not os.path.exists(csv_file_path) or os.path.getsize(csv_file_path) == 0:
+        st.error("O arquivo CSV 'relatorios_conversas.csv' não foi encontrado ou está vazio.")
+        return
+
+    # Carregar arquivos CSV
+    df_conversas = pd.read_csv(csv_file_path)
+    df_ddd_estado = pd.read_csv('data/ddd_estado_brasil.csv')
+# final função arquivo vazio
+
 
     # Carregar arquivos CSV
     df_conversas = pd.read_csv('data/relatorios_conversas.csv')
@@ -784,5 +829,3 @@ elif pagina_selecionada == "Configurações":
 
 
 # streamlit run dashboard.py
-
-
