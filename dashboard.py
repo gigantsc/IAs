@@ -825,4 +825,4 @@ elif pagina_selecionada == "Dashboard BI":
 elif pagina_selecionada == "Configurações":
     pagina_configuracoes()
 
-# streamlit run dashboard.py
+# streamlit run dashboard.py 
