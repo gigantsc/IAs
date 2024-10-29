@@ -51,6 +51,12 @@ if ai_name and ai_objectives and ai_status:
     st.toast("Informações sobre as IAs configuradas com sucesso.", icon="✅")
 else:
     st.warning("As informações sobre as IAs estão incompletas. Verifique o arquivo de configuração do Streamlit.")
+    
+    
+# Adicionar um seletor de período à barra lateral
+with st.sidebar:
+    st.header("Navegação")
+    pagina_selecionada = st.selectbox("Escolha a página", ["Painel de Mensagem", "Dashboard BI", "Configurações"])
 
 # Definir o layout expandido da página
 st.set_page_config(layout="wide")
