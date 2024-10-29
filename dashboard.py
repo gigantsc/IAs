@@ -9,6 +9,10 @@ from datetime import datetime, timedelta
 import pickle
 from pathlib import Path
 
+# Definir o layout expandido da página
+st.set_page_config(layout="wide")
+load_dotenv()
+
 # Funções para carregar dados de secrets diretamente
 def carrega_dados_secrets():
     api_key = st.secrets["default"]["api_key"]
@@ -57,10 +61,6 @@ else:
 with st.sidebar:
     st.header("Navegação")
     pagina_selecionada = st.selectbox("Escolha a página", ["Painel de Mensagem", "Dashboard BI", "Configurações"])
-
-# Definir o layout expandido da página
-st.set_page_config(layout="wide")
-load_dotenv()
 
 # Configuração de pastas para armazenamento da chave
 PASTA_CONFIGURACOES = Path('configuracoes')
