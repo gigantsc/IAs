@@ -94,15 +94,6 @@
         "documentation": {}
     },
     {
-        "label": "carrega_dados_secrets",
-        "kind": 2,
-        "importPath": "dashboard",
-        "description": "dashboard",
-        "peekOfCode": "def carrega_dados_secrets():\n    api_key = st.secrets[\"default\"][\"api_key\"]\n    redis_url = st.secrets[\"default\"][\"redis_url\"]\n    redis_password = st.secrets[\"default\"][\"redis_password\"]\n    ai_name_info = st.secrets[\"default\"][\"ai_name_info\"]\n    ai_objectives_info = st.secrets[\"default\"][\"ai_objectives_info\"]\n    ai_status_info = st.secrets[\"default\"][\"ai_status_info\"]\n    return api_key, redis_url, redis_password, ai_name_info, ai_objectives_info, ai_status_info\n# Carregar dados do secrets\napi_key, redis_url, redis_password, ai_name, ai_objectives, ai_status = carrega_dados_secrets()",
-        "detail": "dashboard",
-        "documentation": {}
-    },
-    {
         "label": "salva_chave",
         "kind": 2,
         "importPath": "dashboard",
