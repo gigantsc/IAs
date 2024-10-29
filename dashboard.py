@@ -22,6 +22,36 @@ def carrega_dados_secrets():
 # Carregar dados do secrets
 api_key, redis_url, redis_password, ai_name, ai_objectives, ai_status = carrega_dados_secrets()
 
+# Inicializar o cliente OpenAI usando a chave salva
+if api_key:
+    try:
+        client = OpenAI(api_key=api_key)
+        st.toast("Cliente OpenAI inicializado com sucesso.", icon="✅")
+    except Exception as e:
+        st.error(f"Erro ao inicializar o cliente OpenAI: {e}")
+else:
+    st.warning("A chave da API OpenAI não foi fornecida. Verifique o arquivo de configuração do Streamlit.")
+
+# Conectar ao Redis
+if redis_url and redis_password:
+    try:
+        redis_client = redis.Redis.from_url(
+            f'redis://default:{redis_password}@{redis_url}'
+        )
+        redis_client.ping()
+        st.toast("Conexão com Redis estabelecida com sucesso.", icon="✅")
+    except Exception as e:
+        st.error(f"Erro ao conectar ao Redis: {e}")
+        st.stop()
+else:
+    st.warning("As credenciais do Redis estão incompletas. Verifique o arquivo de configuração do Streamlit.")
+
+# Verificação das informações da IA
+if ai_name and ai_objectives and ai_status:
+    st.toast("Informações sobre as IAs configuradas com sucesso.", icon="✅")
+else:
+    st.warning("As informações sobre as IAs estão incompletas. Verifique o arquivo de configuração do Streamlit.")
+
 # Definir o layout expandido da página
 st.set_page_config(layout="wide")
 load_dotenv()
