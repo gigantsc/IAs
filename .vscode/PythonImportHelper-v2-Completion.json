@@ -170,7 +170,7 @@
         "kind": 2,
         "importPath": "dashboard",
         "description": "dashboard",
-        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n#inicio nova função arquivo vazio\nimport os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.\ndef dashboard_bi():\n    # Título com ícone",
+        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n# Carregar arquivos CSV\n#inicio nova função arquivo vazio customcode\nimport os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.\ndef dashboard_bi():",
         "detail": "dashboard",
         "documentation": {}
     },

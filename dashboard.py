@@ -625,9 +625,11 @@ def dashboard_bi():
         "<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>",
         unsafe_allow_html=True
     )
-#inicio nova função arquivo vazio
-import os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.
 
+
+# Carregar arquivos CSV
+#inicio nova função arquivo vazio customcode
+import os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.
 def dashboard_bi():
     # Título com ícone
     st.markdown(
@@ -642,11 +644,8 @@ def dashboard_bi():
     if not os.path.exists(csv_file_path) or os.path.getsize(csv_file_path) == 0:
         st.error("O arquivo CSV 'relatorios_conversas.csv' não foi encontrado ou está vazio.")
         return
-
-    # Carregar arquivos CSV
-    df_conversas = pd.read_csv(csv_file_path)
-    df_ddd_estado = pd.read_csv('data/ddd_estado_brasil.csv')
 # final função arquivo vazio
+
 
 
     # Carregar arquivos CSV
