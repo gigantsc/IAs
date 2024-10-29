@@ -340,6 +340,10 @@ def painel_mensagem():
 
     # Função para restaurar dados do Redis
     def restaurar_dados_do_redis(redis_client):
+        # Verificar se redis_client está conectado antes de tentar acessar
+        if not redis_client:
+         print("redis_client não está conectado. Verifique a conexão com o Redis.")
+         return []  # Retorna lista vazia se a conexão falhar
         cursor = '0'
         dados_redis = []
         while True:
