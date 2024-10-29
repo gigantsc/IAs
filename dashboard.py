@@ -13,6 +13,55 @@ from pathlib import Path
 st.set_page_config(layout="wide")
 load_dotenv()
 
+# Funções para carregar dados de secrets diretamente
+def carrega_dados_secrets():
+    api_key = st.secrets["default"]["api_key"]
+    redis_url = st.secrets["default"]["redis_url"]
+    redis_password = st.secrets["default"]["redis_password"]
+    ai_name_info = st.secrets["default"]["ai_name_info"]
+    ai_objectives_info = st.secrets["default"]["ai_objectives_info"]
+    ai_status_info = st.secrets["default"]["ai_status_info"]
+    return api_key, redis_url, redis_password, ai_name_info, ai_objectives_info, ai_status_info
+
+# Carregar dados do secrets
+api_key, redis_url, redis_password, ai_name, ai_objectives, ai_status = carrega_dados_secrets()
+
+# Inicializar o cliente OpenAI usando a chave salva
+if api_key:
+    try:
+        client = OpenAI(api_key=api_key)
+        st.toast("Cliente OpenAI inicializado com sucesso.", icon="✅")
+    except Exception as e:
+        st.error(f"Erro ao inicializar o cliente OpenAI: {e}")
+else:
+    st.warning("A chave da API OpenAI não foi fornecida. Verifique o arquivo de configuração do Streamlit.")
+
+# Conectar ao Redis
+if redis_url and redis_password:
+    try:
+        redis_client = redis.Redis.from_url(
+            f'redis://default:{redis_password}@{redis_url}'
+        )
+        redis_client.ping()
+        st.toast("Conexão com Redis estabelecida com sucesso.", icon="✅")
+    except Exception as e:
+        st.error(f"Erro ao conectar ao Redis: {e}")
+        st.stop()
+else:
+    st.warning("As credenciais do Redis estão incompletas. Verifique o arquivo de configuração do Streamlit.")
+
+# Verificação das informações da IA
+if ai_name and ai_objectives and ai_status:
+    st.toast("Informações sobre as IAs configuradas com sucesso.", icon="✅")
+else:
+    st.warning("As informações sobre as IAs estão incompletas. Verifique o arquivo de configuração do Streamlit.")
+    
+    
+# Adicionar um seletor de período à barra lateral
+with st.sidebar:
+    st.header("Navegação")
+    pagina_selecionada = st.selectbox("Escolha a página", ["Painel de Mensagem", "Dashboard BI", "Configurações"])
+
 # Configuração de pastas para armazenamento da chave
 PASTA_CONFIGURACOES = Path('configuracoes')
 PASTA_CONFIGURACOES.mkdir(exist_ok=True)
@@ -178,7 +227,6 @@ def pagina_configuracoes():
     # Espaço entre os campos
     st.markdown("<div style='margin-bottom: 40px;'></div>", unsafe_allow_html=True)
 
-
     st.markdown("<span style='color: #03fcf8; font-weight: bold;'>INFORMAÇÕES SOBRE AS IAS</span>", unsafe_allow_html=True)
     
     ai_name_input = st.text_input("• Digite o nome da sua IA. Se não tiver dado um nome, escreva apenas: IA de atendimento", value=st.session_state['ai_name_info'])
@@ -195,7 +243,6 @@ def pagina_configuracoes():
         st.session_state['api_key'] = chave_input
         salva_chave(API_KEY_PATH, chave_input)
 
-
         st.session_state['ai_name_info'] = ai_name_input
         salva_chave(AI_NAME_PATH, ai_name_input)
         
@@ -204,8 +251,6 @@ def pagina_configuracoes():
 
         st.session_state['ai_status_info'] = ai_status_input
         salva_chave(AI_STATUS_PATH, ai_status_input)
-
-
 
         # Salvar as configurações do Redis
         st.session_state['redis_url'] = redis_url_input
@@ -823,5 +868,8 @@ elif pagina_selecionada == "Dashboard BI":
     dashboard_bi()
 elif pagina_selecionada == "Configurações":
     pagina_configuracoes()
+
+
+
 
 # streamlit run dashboard.py
