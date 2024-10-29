@@ -75,6 +75,8 @@ else:
     st.warning("A chave da API OpenAI não foi fornecida. Vá para 'Configurações' para inserir sua chave.")
 
 # Conectar ao Redis somente se as variáveis estiverem preenchidas
+# Configurar Redis após garantir que URL e senha estão disponíveis
+redis_client = None  # Definindo como None inicialmente para evitar NameError
 if st.session_state['redis_url'] and st.session_state['redis_password']:
     try:
         redis_client = redis.Redis.from_url(
