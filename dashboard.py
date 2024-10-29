@@ -77,18 +77,23 @@ else:
 # Conectar ao Redis somente se as variáveis estiverem preenchidas
 # Configurar Redis após garantir que URL e senha estão disponíveis
 redis_client = None  # Definindo como None inicialmente para evitar NameError
-if st.session_state['redis_url'] and st.session_state['redis_password']:
+if st.session_state.get('redis_url') and st.session_state.get('redis_password'):
     try:
         redis_client = redis.Redis.from_url(
             f'redis://default:{st.session_state["redis_password"]}@{st.session_state["redis_url"]}'
         )
         redis_client.ping()
         st.toast("Conexão com Redis estabelecida com sucesso.", icon="✅")
-    except Exception as e:
+    except redis.ConnectionError as e:
         st.error(f"Erro ao conectar ao Redis: {e}")
+        redis_client = None
+        st.stop()
+    except Exception as e:
+        st.error(f"Erro inesperado ao conectar ao Redis: {e}")
+        redis_client = None
         st.stop()
 else:
-    st.warning("As credenciais do Redis estão incompletas. Por favor, preencha os campos de URL e senha do Redis na seção de configurações.")
+    st.warning("As credenciais do Redis estão incompletas. Preencha os campos de URL e senha na seção de configurações.")
 
 
 
