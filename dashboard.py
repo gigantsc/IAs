@@ -8,22 +8,6 @@ from openai import OpenAI
 from datetime import datetime, timedelta
 import pickle
 from pathlib import Path
-import os
-
-# Inicialize a conexão com o Redis usando as variáveis de ambiente
-redis_client = redis.Redis(
-    host=os.getenv("REDIS_URL"),  # ou 'localhost' se estiver executando localmente
-    port=6379,  # porta padrão do Redis
-    password=os.getenv("REDIS_PASSWORD")  # a senha, se for necessária
-)
-# Conecte ao servidor Redis
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)  # Ajuste conforme necessário
-try:
-    redis_client.ping()
-    print("Conexão com o Redis estabelecida com sucesso.")
-except redis.exceptions.ConnectionError as e:
-    print("Erro ao conectar ao Redis:", e)
-
 
 # Definir o layout expandido da página
 st.set_page_config(layout="wide")
@@ -138,29 +122,10 @@ def restaurar_analise_do_redis(redis_client, phone_number, analise_tipo):
         return None
 
 # Função para obter todos os números históricos
-def get_historic_phone_numbers(redis_client):
+def get_historic_phone_numbers(_redis_client):
     phone_numbers_with_timestamps = {}
-    cursor = '0'  # Inicialize o cursor como '0' antes do loop
+    cursor = '0'
 
-    # Buscar pelas chaves que seguem o padrão `conversation:*`
-    while cursor != '0':  # O loop continua enquanto o cursor não retorna '0'
-        cursor, keys = redis_client.scan(cursor=cursor, match='conversation:*', count=1000)
-        for key in keys:
-            # Recuperar mensagens armazenadas no formato JSON
-            messages = redis_client.lrange(key, 0, -1)  # Pega todas as mensagens do Redis
-            for message_data in messages:
-                message_data = json.loads(message_data.decode('utf-8'))
-                phone_number = key.split(":")[1]  # Extrai o número do telefone da chave
-                timestamp = int(message_data['timestamp'])
-                # Atualizar a lista se encontrar um timestamp mais recente
-                if phone_number not in phone_numbers_with_timestamps or timestamp > phone_numbers_with_timestamps[phone_number]:
-                    phone_numbers_with_timestamps[phone_number] = timestamp
-
-    # Ordenar e retornar todos os históricos
-    sorted_phone_numbers = sorted(phone_numbers_with_timestamps.items(), key=lambda x: x[1], reverse=True)
-    historic_phone_numbers = [{'phone_number': phone, 'created_at': timestamp} for phone, timestamp in sorted_phone_numbers]
-    return historic_phone_numbers
-        
     # Carregar todos os números do Redis
     while True:
         cursor, keys = _redis_client.scan(cursor=cursor, match='message:*', count=1000)
@@ -372,37 +337,18 @@ def painel_mensagem():
             redis_client.set(f"dashboard_dados:{phone_number}", json.dumps(row.to_dict()))  # Salva o DataFrame como JSON no Redis
 
     # Função para restaurar dados do Redis
-def restaurar_dados_do_redis(redis_client):
-    cursor = '0'
-    dados_redis = []
-    while cursor != '0':
-        # Tente escanear as chaves com o padrão `conversation:*`
-        cursor, keys = redis_client.scan(cursor=cursor, match='conversation:*', count=1000)
-        st.write(f"Chaves encontradas: {keys}")  # Verifique se alguma chave é retornada
-
-        # Se nenhuma chave for encontrada, interrompa o processo para debugar
-        if not keys:
-            st.warning("Nenhuma chave de conversa encontrada no Redis.")
-            break
-
-        for key in keys:
-            # Tente ler as mensagens associadas à chave
-            mensagens = redis_client.lrange(key, 0, -1)
-            st.write(f"Mensagens para a chave {key}: {mensagens}")  # Verifique o conteúdo das mensagens
-
-            if mensagens:
-                # Decodifique as mensagens e adicione ao `dados_redis`
-                conversa = [json.loads(msg.decode('utf-8')) for msg in mensagens]
-                dados_redis.append(conversa)
-            else:
-                st.warning(f"Sem mensagens para a chave {key}")
-        
-        if cursor == '0':
-            break
-
-    # Exibir os dados completos que foram recuperados
-    st.write("Dados recuperados do Redis:", dados_redis)
-    return dados_redis
+    def restaurar_dados_do_redis(redis_client):
+        cursor = '0'
+        dados_redis = []
+        while True:
+            cursor, keys = redis_client.scan(cursor=cursor, match='dashboard_dados:*', count=1000)
+            for key in keys:
+                dado = redis_client.get(key)
+                if dado:
+                    dados_redis.append(json.loads(dado.decode('utf-8')))
+            if cursor == 0:
+                break
+        return dados_redis
 
     # Função para salvar o estado dos checks no Redis
     def salvar_checks_no_redis(redis_client, df):
@@ -424,14 +370,11 @@ def restaurar_dados_do_redis(redis_client):
     if 'df' not in st.session_state:
         if dados_salvos:
             df = pd.DataFrame(dados_salvos)
-            st.write("DataFrame criado a partir dos dados do Redis:", df)
-            
             # Aplicar a normalização da data e ordenar
             df['Data de Criação'] = df['Data de Criação'].apply(normalizar_data)
             df = df.sort_values(by='Data de Criação', ascending=False)
             st.session_state['df'] = df
         else:
-            st.warning("Nenhum dado encontrado no Redis.")
             df = pd.DataFrame()
             st.session_state['df'] = df
     else:
@@ -445,31 +388,9 @@ def restaurar_dados_do_redis(redis_client):
     # Obter a data atual
     today = datetime.today()
 
-#começa
-      # Verificar se o DataFrame está vazio
-    if df.empty:
-        st.warning("Sem dados disponíveis no DataFrame.")
-        st.stop()  # Interrompe a execução se não houver dados
-
-    # Verificar as colunas disponíveis no DataFrame
-    st.write("Colunas disponíveis no DataFrame:", df.columns.tolist())
-
-    # Remover espaços extras nos nomes das colunas e converter tudo para minúsculas para facilitar a comparação
-    df.columns = df.columns.str.strip().str.lower()
-
-    # Verificar se a coluna 'data de criação' (em minúsculas) existe
-    if 'data de criação' not in df.columns:
-        st.error("Coluna 'Data de Criação' não encontrada no DataFrame. As colunas disponíveis são: " + ", ".join(df.columns))
-        st.stop()
-
-    # Ajustar para o nome correto da coluna em minúsculas
-    temp_dates = pd.to_datetime(df['data de criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
- 
-    #termina
-
     # Criar uma série temporária com as datas convertidas
     temp_dates = pd.to_datetime(df['Data de Criação'], format='%d/%m/%y %H:%M:%S', dayfirst=True, errors='coerce')
-    
+
     # Aplicar o filtro de acordo com o período selecionado
     if selected_period == 'Último mês':
         start_date = today - timedelta(days=30)
@@ -682,29 +603,6 @@ def dashboard_bi():
         "<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>",
         unsafe_allow_html=True
     )
-#inicio nova função arquivo vazio
-import os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.
-
-def dashboard_bi():
-    # Título com ícone
-    st.markdown(
-        "<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>",
-        unsafe_allow_html=True
-    )
-
-    # Caminho do arquivo CSV
-    csv_file_path = 'data/relatorios_conversas.csv'
-
-    # Verificar se o arquivo existe e não está vazio
-    if not os.path.exists(csv_file_path) or os.path.getsize(csv_file_path) == 0:
-        st.error("O arquivo CSV 'relatorios_conversas.csv' não foi encontrado ou está vazio.")
-        return
-
-    # Carregar arquivos CSV
-    df_conversas = pd.read_csv(csv_file_path)
-    df_ddd_estado = pd.read_csv('data/ddd_estado_brasil.csv')
-# final função arquivo vazio
-
 
     # Carregar arquivos CSV
     df_conversas = pd.read_csv('data/relatorios_conversas.csv')
