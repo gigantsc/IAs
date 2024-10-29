@@ -92,7 +92,8 @@ if st.session_state.get('redis_url') and st.session_state.get('redis_password'):
     try:
         # Configura o cliente Redis usando as credenciais do session_state
         redis_client = redis.Redis.from_url(
-            f'redis://default:{st.session_state["redis_password"]}@{st.session_state["redis_url"]}'
+            f'redis://default:{st.session_state["redis_password"]}@{st.session_state["redis_url"]}',
+             socket_timeout=5  # Timeout em segundos
         )
         # Testa a conexão com um ping
         redis_client.ping()
