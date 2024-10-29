@@ -94,15 +94,6 @@
         "documentation": {}
     },
     {
-        "label": "os",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "os",
-        "description": "os",
-        "detail": "os",
-        "documentation": {}
-    },
-    {
         "label": "salva_chave",
         "kind": 2,
         "importPath": "dashboard",
@@ -170,16 +161,7 @@
         "kind": 2,
         "importPath": "dashboard",
         "description": "dashboard",
-        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n#inicio nova função arquivo vazio\nimport os  # Adicione essa importação no topo do arquivo, caso ainda não esteja lá.\ndef dashboard_bi():\n    # Título com ícone",
-        "detail": "dashboard",
-        "documentation": {}
-    },
-    {
-        "label": "dashboard_bi",
-        "kind": 2,
-        "importPath": "dashboard",
-        "description": "dashboard",
-        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n    # Caminho do arquivo CSV\n    csv_file_path = 'data/relatorios_conversas.csv'\n    # Verificar se o arquivo existe e não está vazio\n    if not os.path.exists(csv_file_path) or os.path.getsize(csv_file_path) == 0:",
+        "peekOfCode": "def dashboard_bi():\n    # Título com ícone\n    st.markdown(\n        \"<h1 style='text-align: center; font-size: 36px;'>📊 Business Intelligence Dashboard</h1>\",\n        unsafe_allow_html=True\n    )\n    # Carregar arquivos CSV\n    df_conversas = pd.read_csv('data/relatorios_conversas.csv')\n    df_ddd_estado = pd.read_csv('data/ddd_estado_brasil.csv')\n    # Mesclar os dados de DDD com estado",
         "detail": "dashboard",
         "documentation": {}
     },
